@@ -10,7 +10,7 @@ export const CreateRoomForm: React.FC = () => {
   const [privacy, setPrivacy] = useState<'public' | 'private'>('public');
   const [isCustomDeck, setIsCustomDeck] = useState(false);
   const [deckFile, setDeckFile] = useState<File | null>(null);
-  const [customDeck, setCustomDeck] = useState<DeckDefinition | null>(null);
+  const [includeFaceCards, setIncludeFaceCards] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,11 +24,10 @@ export const CreateRoomForm: React.FC = () => {
 
       if (isCustomDeck) {
         if (!deckFile) {
-          throw new Error('Subí un archivo ZIP con tu mazo personalizado.');
+          throw new Error('Subí un archivo ZIP con tu mazo personalizado o spritesheet de Balatro.');
         }
         const uploaded = await uploadCustomDeck(deckFile);
         deckToUse = uploaded.deck as unknown as DeckDefinition;
-        setCustomDeck(deckToUse);
       }
 
       const res = await createRoom({
@@ -37,6 +36,7 @@ export const CreateRoomForm: React.FC = () => {
         privacy,
         deckType: isCustomDeck ? 'custom' : 'standard',
         customDeck: deckToUse,
+        includeFaceCards,
       });
 
       if (!res.ok) {
@@ -85,7 +85,7 @@ export const CreateRoomForm: React.FC = () => {
           <button
             type="button"
             onClick={() => setPrivacy('public')}
-            className={`flex-1 rounded-lg py-2 ${
+            className={`flex-1 rounded-lg py-2 transition-colors ${
               privacy === 'public' ? 'bg-emerald-600' : 'bg-slate-700'
             }`}
           >
@@ -94,7 +94,7 @@ export const CreateRoomForm: React.FC = () => {
           <button
             type="button"
             onClick={() => setPrivacy('private')}
-            className={`flex-1 rounded-lg py-2 ${
+            className={`flex-1 rounded-lg py-2 transition-colors ${
               privacy === 'private' ? 'bg-emerald-600' : 'bg-slate-700'
             }`}
           >
@@ -109,27 +109,67 @@ export const CreateRoomForm: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsCustomDeck(false)}
-            className={`flex-1 rounded-lg py-2 ${!isCustomDeck ? 'bg-emerald-600' : 'bg-slate-700'}`}
+            className={`flex-1 rounded-lg py-2 transition-colors ${
+              !isCustomDeck ? 'bg-emerald-600' : 'bg-slate-700'
+            }`}
           >
             Póquer Regular
           </button>
           <button
             type="button"
             onClick={() => setIsCustomDeck(true)}
-            className={`flex-1 rounded-lg py-2 ${isCustomDeck ? 'bg-emerald-600' : 'bg-slate-700'}`}
+            className={`flex-1 rounded-lg py-2 transition-colors ${
+              isCustomDeck ? 'bg-emerald-600' : 'bg-slate-700'
+            }`}
           >
             Personalizada
           </button>
         </div>
 
         {isCustomDeck && (
-          <input
-            type="file"
-            accept=".zip"
-            onChange={(e) => setDeckFile(e.target.files?.[0] ?? null)}
-            className="mt-2 w-full text-sm"
-          />
+          <div className="mt-2 space-y-2">
+            <input
+              type="file"
+              accept=".zip"
+              onChange={(e) => setDeckFile(e.target.files?.[0] ?? null)}
+              className="w-full text-sm"
+            />
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Aceptamos dos formatos de ZIP:{' '}
+              <strong className="text-slate-300">deck.json + carpeta cards/</strong> (formato clásico), o{' '}
+              <strong className="text-slate-300">un spritesheet PNG estilo Balatro</strong> — subí
+              directamente el archivo de textura de tu mod/pack de Balatro (grilla de 13x4, 71x95px por
+              carta) y lo recortamos solos. Si tu pack usa otra grilla, incluí un{' '}
+              <code className="bg-slate-900 px-1 rounded">manifest.json</code> en el ZIP con{' '}
+              <code className="bg-slate-900 px-1 rounded">columns</code>,{' '}
+              <code className="bg-slate-900 px-1 rounded">rows</code>,{' '}
+              <code className="bg-slate-900 px-1 rounded">cardWidth</code> y{' '}
+              <code className="bg-slate-900 px-1 rounded">cardHeight</code>.
+            </p>
+          </div>
         )}
+      </div>
+
+      <div className="flex items-center justify-between bg-slate-700/60 rounded-lg px-3 py-2">
+        <div>
+          <p className="text-sm font-medium">Jugar con figuras (J, Q, K, A)</p>
+          <p className="text-xs text-slate-400">Desactivalo para jugar solo con cartas numéricas (2-10)</p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={includeFaceCards}
+          onClick={() => setIncludeFaceCards((v) => !v)}
+          className={`w-12 h-7 rounded-full relative transition-colors shrink-0 ${
+            includeFaceCards ? 'bg-emerald-600' : 'bg-slate-600'
+          }`}
+        >
+          <span
+            className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-transform ${
+              includeFaceCards ? 'translate-x-6' : 'translate-x-1'
+            }`}
+          />
+        </button>
       </div>
 
       {error && <p className="text-red-400 text-sm">{error}</p>}
@@ -137,7 +177,7 @@ export const CreateRoomForm: React.FC = () => {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-lg bg-emerald-600 py-2 font-medium hover:bg-emerald-500 disabled:opacity-50"
+        className="w-full rounded-lg bg-emerald-600 py-2 font-medium hover:bg-emerald-500 disabled:opacity-50 transition-colors"
       >
         {loading ? 'Creando...' : 'Crear Sala'}
       </button>

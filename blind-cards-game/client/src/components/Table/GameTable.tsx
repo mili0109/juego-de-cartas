@@ -8,7 +8,7 @@ import { TextChat } from '../Chat/TextChat';
 import { VoiceChat } from '../Voice/VoiceChat';
 
 export const GameTable: React.FC = () => {
-  const { room, startGame, askOpponent } = useGame();
+  const { room, startGame, askOpponent, leaveRoom } = useGame();
   const { socket } = useSocketContext();
   const { standings } = useGameContext();
 
@@ -18,21 +18,36 @@ export const GameTable: React.FC = () => {
   const isMyTurn = room.currentTurnPlayerId === socket.id;
   const canSelectTarget = isMyTurn && !room.pendingGuess;
 
+  const handleLeave = () => {
+    if (room.status === 'in_progress' && !window.confirm('¿Seguro que querés salir? La partida sigue sin vos.')) {
+      return;
+    }
+    leaveRoom();
+  };
+
   return (
-    <div className="max-w-5xl mx-auto mt-8 space-y-6">
+    <div className="max-w-5xl mx-auto mt-8 space-y-6 animate-fade-in">
+      <button
+        onClick={handleLeave}
+        className="flex items-center gap-1 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+      >
+        <span aria-hidden>←</span> Volver al lobby
+      </button>
+
       <div className="flex items-center justify-between bg-slate-800 rounded-xl p-4">
         <div>
           <h1 className="text-xl font-semibold">{room.config.name}</h1>
           <p className="text-xs text-slate-400">
             Código: <span className="font-mono">{room.code}</span> · Mazo restante:{' '}
             {room.cardsRemaining} cartas
+            {!room.config.includeFaceCards && ' · Sin figuras (J, Q, K, A)'}
           </p>
         </div>
         {room.status === 'lobby' && isHost && (
           <button
             onClick={startGame}
             disabled={room.players.length < 3}
-            className="rounded-lg bg-emerald-600 px-4 py-2 font-medium hover:bg-emerald-500 disabled:opacity-40"
+            className="rounded-lg bg-emerald-600 px-4 py-2 font-medium hover:bg-emerald-500 disabled:opacity-40 transition-colors"
           >
             Iniciar Partida ({room.players.length}/{room.config.maxPlayers})
           </button>
@@ -43,7 +58,7 @@ export const GameTable: React.FC = () => {
       </div>
 
       {standings && (
-        <div className="bg-slate-800 rounded-xl p-4">
+        <div className="bg-slate-800 rounded-xl p-4 animate-fade-in">
           <h2 className="font-semibold mb-2">🏆 Fin de la partida</h2>
           <ol className="space-y-1 text-sm">
             {standings.map((s, idx) => (
@@ -52,6 +67,12 @@ export const GameTable: React.FC = () => {
               </li>
             ))}
           </ol>
+          <button
+            onClick={leaveRoom}
+            className="mt-3 w-full rounded-lg bg-emerald-600 py-2 font-medium hover:bg-emerald-500 transition-colors"
+          >
+            Volver al lobby
+          </button>
         </div>
       )}
 

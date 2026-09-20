@@ -9,6 +9,7 @@ interface CreateRoomPayload {
   deckType: 'standard' | 'custom';
   customDeck?: DeckDefinition;
   winScore?: number;
+  includeFaceCards?: boolean;
   gamertag: string;
 }
 
@@ -28,6 +29,7 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
         deckType: payload.deckType === 'custom' ? 'custom' : 'standard',
         customDeck: payload.deckType === 'custom' ? payload.customDeck : undefined,
         winScore: payload.winScore ?? 5,
+        includeFaceCards: payload.includeFaceCards !== false,
       };
 
       const room = GameEngine.createRoom(config, socket.id, payload.gamertag || 'Jugador');
@@ -85,6 +87,18 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
       ack?.({ ok: false, message: errorMessage(err) });
       socket.emit('error:game_error', { message: errorMessage(err) });
     }
+  });
+
+  socket.on('room:leave', ({ roomId }: { roomId: string }, ack?: (res: any) => void) => {
+    const result = GameEngine.removePlayer(socket.id);
+    socket.leave(roomId);
+    if (result) {
+      GameEngine.broadcastSanitizedState(io, result.room.id);
+      io.emit('lobby:rooms_update', GameEngine.listPublicRooms().map((r) =>
+        GameEngine.sanitizeForPlayer(r, '')
+      ));
+    }
+    ack?.({ ok: true });
   });
 
   socket.on('disconnect', () => {

@@ -55,11 +55,35 @@ El servidor nunca envía a un jugador el valor real de su propia carta — el es
 
 ## Mazos personalizados
 
-Deben subirse como `.zip` conteniendo `deck.json` (con exactamente 52 cartas, 13 por palo) y una carpeta `cards/` con las imágenes referenciadas. El validador (`server/src/utils/deckValidator.ts`) rechaza mazos incompletos, duplicados o con imágenes faltantes.
+Se aceptan **dos formatos** de ZIP para subir un mazo personalizado (el servidor detecta cuál es automáticamente):
 
-## Desplegar en línea (jugar con amigos por internet)
+1. **Formato clásico:** `deck.json` en la raíz (52 cartas, 13 por palo) + carpeta `cards/` con las imágenes referenciadas.
+2. **Spritesheet estilo Balatro:** subís directamente la imagen PNG de un mod/texture pack de Balatro (grilla estándar de 13 columnas x 4 filas, 71x95px por carta a escala 1x, o el doble a 2x — se detecta el tamaño automáticamente). El servidor recorta cada carta sola. Si tu pack usa una grilla distinta, incluí un `manifest.json` en el mismo ZIP:
+   ```json
+   {
+     "name": "Mi mazo Balatro",
+     "columns": 13,
+     "rows": 4,
+     "cardWidth": 71,
+     "cardHeight": 95,
+     "rankOrder": ["2","3","4","5","6","7","8","9","10","J","Q","K","A"],
+     "suitOrder": ["spades","hearts","clubs","diamonds"]
+   }
+   ```
+   Todos los campos son opcionales — se completan con estos valores por defecto si no los indicás.
 
-Servidor y cliente se despliegan por separado. Guía para **Railway** (servidor) + **Vercel** (cliente) — ambos con planes gratuitos que alcanzan de sobra para esto.
+## Jugar con o sin figuras (J, Q, K, A)
+
+Al crear una sala hay un interruptor "Jugar con figuras" — desactivarlo hace que el mazo estándar solo incluya cartas numéricas (2 al 10), quedando 36 cartas en vez de 52. Afecta únicamente a la baraja estándar; los mazos personalizados siempre usan las 52 cartas que trae el ZIP.
+
+## Navegación y animaciones
+
+- Botón "← Cambiar gamertag" en el lobby, y "← Volver al lobby" dentro de la sala/mesa de juego (con confirmación si la partida ya está en curso).
+- Las cartas tienen una animación sutil de aparición al repartirse, un leve flotado continuo, y un pulso en la carta del jugador cuyo turno está activo.
+
+## Desplegar en línea GRATIS (jugar con amigos por internet)
+
+Servidor y cliente se despliegan por separado, en dos servicios gratuitos: **Render** (servidor) + **Vercel** (cliente) + **LiveKit Cloud** (voz, opcional). Ninguno de los tres pide tarjeta para el uso que necesita este proyecto.
 
 ### A. Subir el proyecto a GitHub
 
@@ -70,41 +94,44 @@ git add .
 git commit -m "Blind Cards"
 ```
 
-Creá un repositorio en GitHub y subilo (`git remote add origin ...` + `git push`). Como el `.gitignore` ya excluye `node_modules` y `.env`, no subís nada innecesario ni tus credenciales.
+Creá un repositorio en GitHub y subilo (`git remote add origin ...` + `git push`). El `.gitignore` ya excluye `node_modules` y `.env`, así que no subís nada innecesario ni tus credenciales.
 
-### B. Desplegar el servidor en Railway
+### B. Desplegar el servidor en Render (gratis)
 
-1. Entrá a [railway.app](https://railway.app), "New Project" → "Deploy from GitHub repo" → elegí tu repo.
-2. En **Settings → Root Directory**, poné `server` (el repo tiene cliente y servidor juntos, Railway necesita saber cuál desplegar).
-3. Railway detecta `package.json` automáticamente (usa el `railway.json` incluido) y corre `npm install` → `npm run build` → `npm run start`.
-4. En **Variables**, agregá:
-   - `CLIENT_ORIGIN` → lo completás en el paso D, dejalo pendiente por ahora
+1. Entrá a [render.com](https://render.com) y creá una cuenta con GitHub.
+2. "New +" → "Web Service" → elegí tu repositorio.
+3. Render detecta el `render.yaml` incluido automáticamente y propone: **Root Directory** `server`, **Build Command** `npm install && npm run build`, **Start Command** `npm run start`. Confirmá el plan **Free**.
+4. En **Environment**, completá las variables:
+   - `CLIENT_ORIGIN` → lo dejás pendiente por ahora, lo completás en el paso E
    - `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `LIVEKIT_URL` (ver sección C)
-   - Railway ya define `PORT` automáticamente, no lo toques
-5. Cuando termine el deploy, Railway te da una URL pública tipo `https://tu-juego-server.up.railway.app`. **Copiala**, la necesitás para el cliente.
+5. Deploy. Render te da una URL pública tipo `https://blind-cards-server.onrender.com`. **Copiala**, la necesitás para el cliente.
 
-### C. Voz en línea con LiveKit Cloud (opcional pero recomendado)
+> Nota sobre el plan gratis de Render: si nadie usa el servidor durante 15 minutos, se "duerme", y el primer pedido después tarda ~30-60 segundos en responder mientras despierta. Para jugar con amigos alcanza perfecto — solo avisales que el primer ingreso puede tardar un poco.
 
-1. Creá una cuenta gratis en [cloud.livekit.io](https://cloud.livekit.io) y un proyecto nuevo.
+### C. Voz en línea con LiveKit Cloud (opcional, gratis)
+
+1. Creá una cuenta gratis en [cloud.livekit.io](https://cloud.livekit.io) (plan **Build**, no pide tarjeta) y un proyecto nuevo.
 2. En el dashboard del proyecto, copiá `API Key`, `API Secret` y la `WebSocket URL` (empieza con `wss://`).
-3. Pegalos como variables de entorno en Railway (paso B.4).
+3. Pegalos como variables de entorno en Render (paso B.4).
 
 Si te lo salteás, el resto del juego funciona igual — solo el botón "Unirse al Chat de Voz" va a fallar.
 
-### D. Desplegar el cliente en Vercel
+### D. Desplegar el cliente en Vercel (gratis)
 
 1. Entrá a [vercel.com](https://vercel.com), "Add New Project" → importá el mismo repo de GitHub.
 2. En **Root Directory**, poné `client`.
-3. En **Environment Variables**, agregá `VITE_SERVER_URL` con la URL de Railway del paso B.5 (ej. `https://tu-juego-server.up.railway.app`).
+3. En **Environment Variables**, agregá `VITE_SERVER_URL` con la URL de Render del paso B.5 (ej. `https://blind-cards-server.onrender.com`).
 4. Deploy. Vercel te da una URL tipo `https://tu-juego.vercel.app` — esa es la que compartís con tus amigos.
 
 ### E. Cerrar el círculo del CORS
 
-Volvé a Railway y completá la variable `CLIENT_ORIGIN` que dejaste pendiente con la URL de Vercel del paso D.4 (ej. `https://tu-juego.vercel.app`). Guardá — Railway redeploya solo. Sin este paso, el navegador va a bloquear la conexión del cliente al servidor por CORS.
+Volvé a Render y completá la variable `CLIENT_ORIGIN` que dejaste pendiente con la URL de Vercel del paso D.4 (ej. `https://tu-juego.vercel.app`). Guardá — Render redeploya solo. Sin este paso, el navegador va a bloquear la conexión del cliente al servidor por CORS.
 
 ### F. Probar
 
-Abrí la URL de Vercel en dos dispositivos o pestañas distintas (con gamertags distintos), creá una sala, compartí el código de 6 caracteres, y a jugar. No hace falta que tus amigos instalen nada — solo entran al link.
+Abrí la URL de Vercel en dos dispositivos o pestañas distintas (con gamertags distintos), creá una sala, compartí el código de 6 caracteres, y a jugar. No hace falta que tus amigos instalen nada — solo entran al link. Si el servidor estaba "dormido", el primer intento de crear/unirse a una sala puede tardar hasta un minuto; el resto va normal.
+
+> Si preferís **Railway** en vez de Render, el `server/railway.json` incluido también sirve — pero desde 2026 Railway ya no tiene plan gratis permanente (da $5 de crédito único y después cobra), así que Render es la opción sin costo real.
 
 ## Pendientes / posibles extensiones
 

@@ -130,7 +130,7 @@ class GameEngineClass {
     const baseDeck =
       room.config.deckType === 'custom' && room.config.customDeck
         ? buildDeckFromDefinition(room.config.customDeck)
-        : buildStandardDeck();
+        : buildStandardDeck(room.config.includeFaceCards);
 
     room.drawPile = shuffle(baseDeck);
     room.discardPile = [];
@@ -252,6 +252,7 @@ class GameEngineClass {
         privacy: room.config.privacy,
         deckType: room.config.deckType,
         winScore: room.config.winScore,
+        includeFaceCards: room.config.includeFaceCards,
         hasCustomDeck: !!room.config.customDeck,
       },
       hostId: room.hostId,

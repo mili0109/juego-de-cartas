@@ -35,6 +35,7 @@ export interface SanitizedRoomState {
     privacy: RoomPrivacy;
     deckType: DeckType;
     winScore: number;
+    includeFaceCards: boolean;
     hasCustomDeck: boolean;
   };
   hostId: string;

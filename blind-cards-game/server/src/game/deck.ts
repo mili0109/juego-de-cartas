@@ -2,11 +2,13 @@ import { Card, DeckDefinition, Suit } from './types';
 
 const SUITS: Suit[] = ['spades', 'hearts', 'diamonds', 'clubs'];
 
-/** Genera la baraja estándar de póquer (52 cartas). */
-export function buildStandardDeck(): Card[] {
+/** Genera la baraja estándar de póquer (52 cartas), o solo numéricas (2-10) si se excluyen figuras. */
+export function buildStandardDeck(includeFaceCards: boolean = true): Card[] {
   const cards: Card[] = [];
   for (const suit of SUITS) {
     for (let value = 1; value <= 13; value++) {
+      const isFaceOrAce = value === 1 || value >= 11; // As, J, Q, K
+      if (!includeFaceCards && isFaceOrAce) continue;
       cards.push({
         id: `${cardValueLabel(value)}${suit[0].toUpperCase()}`,
         suit,

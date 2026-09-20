@@ -13,7 +13,7 @@ export const Lobby: React.FC = () => {
 
   if (!gamertag) {
     return (
-      <div className="max-w-sm mx-auto mt-24 bg-slate-800 p-6 rounded-xl space-y-4">
+      <div className="max-w-sm mx-auto mt-24 bg-slate-800 p-6 rounded-xl space-y-4 animate-fade-in">
         <h1 className="text-xl font-semibold text-center">Blind Cards</h1>
         <p className="text-sm text-slate-400 text-center">Elegí tu gamertag para continuar</p>
         <input
@@ -24,7 +24,7 @@ export const Lobby: React.FC = () => {
         />
         <button
           onClick={() => nameInput.trim() && setGamertag(nameInput.trim())}
-          className="w-full rounded-lg bg-emerald-600 py-2 font-medium hover:bg-emerald-500"
+          className="w-full rounded-lg bg-emerald-600 py-2 font-medium hover:bg-emerald-500 transition-colors"
         >
           Continuar
         </button>
@@ -35,6 +35,12 @@ export const Lobby: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto mt-10 space-y-6">
       <div className="flex items-center justify-between">
+        <button
+          onClick={() => setGamertag('')}
+          className="flex items-center gap-1 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+        >
+          <span aria-hidden>←</span> Cambiar gamertag
+        </button>
         <h1 className="text-2xl font-semibold">🃏 Blind Cards</h1>
         <span className="text-sm text-slate-400">Jugando como {gamertag}</span>
       </div>
@@ -42,7 +48,7 @@ export const Lobby: React.FC = () => {
       <div className="flex gap-2">
         <button
           onClick={() => setTab('create')}
-          className={`flex-1 rounded-lg py-2 font-medium ${
+          className={`flex-1 rounded-lg py-2 font-medium transition-colors ${
             tab === 'create' ? 'bg-emerald-600' : 'bg-slate-800'
           }`}
         >
@@ -50,7 +56,7 @@ export const Lobby: React.FC = () => {
         </button>
         <button
           onClick={() => setTab('join')}
-          className={`flex-1 rounded-lg py-2 font-medium ${
+          className={`flex-1 rounded-lg py-2 font-medium transition-colors ${
             tab === 'join' ? 'bg-emerald-600' : 'bg-slate-800'
           }`}
         >

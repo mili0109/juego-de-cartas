@@ -35,6 +35,7 @@ export interface RoomConfig {
   deckType: DeckType;
   customDeck?: DeckDefinition;
   winScore: number; // límite de cartas adivinadas para ganar
+  includeFaceCards: boolean; // si es false, se excluyen J, Q, K y As del mazo estándar
 }
 
 export interface RoomState {
@@ -72,7 +73,6 @@ export interface SanitizedRoomState {
   pendingGuess: { targetPlayerId: string } | null;
   cardsRemaining: number;
 }
-
 export interface ChatMessage {
   sender: string;
   text: string;

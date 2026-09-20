@@ -22,6 +22,7 @@ export function useGame() {
       deckType: DeckType;
       customDeck?: DeckDefinition;
       winScore?: number;
+      includeFaceCards?: boolean;
     }) => {
       return new Promise<AckResponse>((resolve) => {
         socket.emit('room:create', { ...opts, gamertag }, (res: AckResponse) => {
@@ -94,6 +95,12 @@ export function useGame() {
     [socket, room, gamertag]
   );
 
+  const leaveRoom = useCallback(() => {
+    if (!room) return;
+    socket.emit('room:leave', { roomId: room.id });
+    setRoom(null);
+  }, [socket, room, setRoom]);
+
   return {
     room,
     createRoom,
@@ -104,5 +111,6 @@ export function useGame() {
     askOpponent,
     resolveGuess,
     sendChatMessage,
+    leaveRoom,
   };
 }
